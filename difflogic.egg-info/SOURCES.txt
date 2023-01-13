@@ -1,0 +1,15 @@
+LICENSE
+README.md
+setup.py
+difflogic/__init__.py
+difflogic/compiled_model.py
+difflogic/difflogic.py
+difflogic/functional.py
+difflogic/packbitstensor.py
+difflogic.egg-info/PKG-INFO
+difflogic.egg-info/SOURCES.txt
+difflogic.egg-info/dependency_links.txt
+difflogic.egg-info/requires.txt
+difflogic.egg-info/top_level.txt
+difflogic/cuda/difflogic.cpp
+difflogic/cuda/difflogic_kernel.cu
