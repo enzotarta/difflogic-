@@ -61,6 +61,8 @@ class LogicLayer(torch.nn.Module):
             """
             given_x_indices_of_y = [[] for _ in range(in_dim)]
             indices_0_np = self.indices[0].cpu().numpy()
+            print(indices_0_np)
+            error()
             indices_1_np = self.indices[1].cpu().numpy()
             for y in range(out_dim):
                 given_x_indices_of_y[indices_0_np[y]].append(y)

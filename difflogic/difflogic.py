@@ -20,7 +20,7 @@ class LogicLayer(torch.nn.Module):
             grad_factor: float = 1.,
             implementation: str = None,
             connections: str = 'random',
-            temp: float = 1.0,
+            temp: float = 10.0,
     ):
         """
         :param in_dim:      input dimensionality of the layer
@@ -54,6 +54,7 @@ class LogicLayer(torch.nn.Module):
         self.connections = connections
         assert self.connections in ['random', 'unique'], self.connections
         self.indices = self.get_connections(self.connections, device)
+        print("here")
 
         if self.implementation == 'cuda':
             """
@@ -161,6 +162,8 @@ class LogicLayer(torch.nn.Module):
             c = torch.randperm(2 * self.out_dim) % self.in_dim
             c = torch.randperm(self.in_dim)[c]
             c = c.reshape(2, self.out_dim)
+            print(c)
+            error()
             a, b = c[0], c[1]
             a, b = a.to(torch.int64), b.to(torch.int64)
             a, b = a.to(device), b.to(device)
