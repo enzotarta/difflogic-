@@ -246,6 +246,7 @@ class LogicLayer(torch.nn.Module):
             implementation: str = None,
             connections: str = 'random',
             temp: float = 1.0,
+            frozen: bool = False,
     ):
         """
         :param in_dim:      input dimensionality of the layer
@@ -263,6 +264,7 @@ class LogicLayer(torch.nn.Module):
         self.device = device
         self.grad_factor = grad_factor
         self.temp = temp
+        self.frozen = frozen
 
         """
         The CUDA implementation is the fast implementation. As the name implies, the cuda implementation is only 
@@ -392,6 +394,13 @@ class LogicLayer(torch.nn.Module):
         return x
         
     def forward_python_modified(self, x):
+        if self.frozen:
+            with torch.no_grad():
+                a = torch.einsum('ij,ki->kj', self.weights_connections[:,0,:], x)
+                b = torch.einsum('ij,ki->kj', self.weights_connections[:,1,:], x)
+                x = bin_op_s(a, b, self.weights)
+                return x
+        
         assert x.shape[-1] == self.in_dim, (x[0].shape[-1], self.in_dim)
 
         if self.indices[0].dtype == torch.int64 or self.indices[1].dtype == torch.int64:
@@ -546,10 +555,19 @@ if __name__ == '__main__':
         model, loss_fn, optim = get_model(args)
         if num_layers > 1:
             for this_layer_idx in range(1, num_layers):
+                model[this_layer_idx].frozen=True
                 model[this_layer_idx].weights.requires_grad_(False)
                 model[this_layer_idx].weights_connections.requires_grad_(False)
-                model[this_layer_idx].weights.copy_(prev_state_dict[str(this_layer_idx)+'.weights'])
-                model[this_layer_idx].weights_connections.copy_(prev_state_dict[str(this_layer_idx)+'.weights_connections'])
+                dim_zero = model[this_layer_idx].weights.shape[1]
+                model[this_layer_idx].weights.copy_(torch.nn.functional.one_hot(torch.argmax(prev_state_dict[str(this_layer_idx)+'.weights'],dim=1), num_classes=dim_zero))
+                dim_zero = model[this_layer_idx].weights_connections.shape[0]
+                a = torch.argmax(prev_state_dict[str(this_layer_idx)+'.weights_connections'],dim=0)
+                b = torch.nn.functional.one_hot(a, num_classes=dim_zero).permute(2,0,1)
+                print(prev_state_dict[str(this_layer_idx)+'.weights_connections'].shape)
+                print(a.shape)
+                print(b.shape)
+                print(model[this_layer_idx].weights_connections.shape)
+                model[this_layer_idx].weights_connections.copy_(torch.nn.functional.one_hot(torch.argmax(prev_state_dict[str(this_layer_idx)+'.weights_connections'],dim=0), num_classes=dim_zero).permute(2,0,1))
         ####################################################################################################################
 
         best_acc = 0
